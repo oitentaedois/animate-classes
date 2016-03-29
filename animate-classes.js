@@ -11,47 +11,53 @@
    * It simply animates by manually calling the animation from somewhere in your application.
    * This API, although simple, is quite flexible when you hook into things like scroll-trigger.
    *
-   * `animateClass(element, animationClass, timeout [, replaceAfter]);`
+   * `animateClass(element, animationClass, timeout [, callback]);`
    *
    * Where the animationName will be set first as `animationClass`
    * and then will be appended with `animationClass-active` after the passed timeout.
-   *
-   * The `replaceAfter` argument may be used to replace the elements className after the animation is done.
-   * If passed as `['oldClass', 'newClass']`, only the provided `oldClass` will be replaced.
-   * Otherwise the whole className will be set to newClass.
    * 
    */
 
-  function animateClasses(el, animationClass, timeout, replaceAfter) {
+  function animateClasses(el, animationClass, timeout, callback) {
+    return getAnimateClasses(el, animationClass, timeout)(callback);
+  };
+
+  /**
+   * Curried function.
+   * Use this if you want to save animations for later or multiple uses.
+   * 
+   * ```
+   *   var animation = getAnimateClasses(element, 'animate', 2000);
+   *   animation(function () {
+   *     // animation is finished.
+   *   });
+   * ```
+   */
+  function getAnimateClasses(el, animationClass, timeout) {
     if (!el || !animationClass || isNaN(timeout)) { return false; }
 
     var activeClass = animationClass + '-active';
 
-    // Imediatelly set the animationClass.
-    el.classList.add(animationClass);
+    return function (callback) {
+      // Imediatelly set the animationClass.
+      el.classList.add(animationClass);
 
-    // Set the active class on the next event loop.
-    setTimeout(function () { el.classList.add(activeClass); });
+      // // Set the active class on the next event loop.
+      setTimeout(function () { el.classList.add(activeClass); });
 
-    // After timeout, remove animation classes and optionally replace class.
-    setTimeout(function () {
-      if (replaceAfter) {
-        if (typeof replaceAfter === 'array') {
-          el.classList.remove(replaceAfter[0], animationClass, activeClass);
-          el.classList.add(replaceAfter[1]);
-        } else {
-          el.className = replaceAfter;
-        }
-      } else {
+      // After timeout, remove animation classes and calls callback function if available.
+      setTimeout(function () {
         el.classList.remove(animationClass, activeClass);
-      }
-    }, timeout)
-  };
+        if (typeof callback === 'function') { callback(); }
+      }, timeout);
+    };
+  }
 
   /**
    * API
    */
   
   window.animateClasses = animateClasses;
+  window.getAnimateClasses = getAnimateClasses; 
 
 })();
